@@ -1,18 +1,20 @@
 # CAJS Configuration Style Guide v2
 
 ## Table of Contents
-1. [Introduction](#1-introduction)
-2. [Project Structure](#2-project-structure)
-3. [Meta Information](#3-meta-information)
-4. [Page Definitions](#4-page-definitions)
-5. [Component Definitions](#5-component-definitions)
-6. [API Route Definitions](#6-api-route-definitions)
-7. [State Management](#7-state-management)
-8. [Styling](#8-styling)
-9. [Internationalization](#9-internationalization)
-10. [Markdown Content](#10-markdown-content)
-11. [Naming Conventions](#11-naming-conventions)
-12. [Best Practices](#12-best-practices)
+- [CAJS Configuration Style Guide v2](#cajs-configuration-style-guide-v2)
+  - [Table of Contents](#table-of-contents)
+  - [1. Introduction](#1-introduction)
+  - [2. Project Structure](#2-project-structure)
+  - [3. Meta Information](#3-meta-information)
+  - [4. Page Definitions](#4-page-definitions)
+  - [5. Component Definitions](#5-component-definitions)
+  - [6. API Route Definitions](#6-api-route-definitions)
+  - [7. State Management](#7-state-management)
+  - [8. Styling](#8-styling)
+  - [9. Internationalization](#9-internationalization)
+  - [10. Markdown Content](#10-markdown-content)
+  - [11. Naming Conventions](#11-naming-conventions)
+  - [12. Best Practices](#12-best-practices)
 
 ## 1. Introduction
 
@@ -149,18 +151,18 @@ Define Markdown content under the `markdown` key:
 
 ```javascript
 markdown: {
-  "terms-and-conditions": "
+  "terms-and-conditions": `
 # Terms and Conditions
 
 1. **Acceptance of Terms**
    By accessing this website, you agree to be bound by these terms and conditions.
 
 2. **Use License**
-   Permission is granted to temporarily download one copy of the materials...
+   Permission is \`granted\` to temporarily download one copy of the materials...
 
    (Rest of the Markdown content)
-  ",
-  "privacy-policy": "
+  `,
+  "privacy-policy": `
 # Privacy Policy
 
 ## 1. Information We Collect
@@ -168,7 +170,7 @@ markdown: {
 We collect information you provide directly to us, such as...
 
 (Rest of the Markdown content)
-  "
+  `
 }
 ```
 

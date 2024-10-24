@@ -8,6 +8,8 @@
   - [3. Meta Information](#3-meta-information)
   - [4. Page Definitions](#4-page-definitions)
   - [5. Component Definitions](#5-component-definitions)
+    - [5.1 Using Pre-built Components](#51-using-pre-built-components)
+    - [5.2 Component Composition Rules](#52-component-composition-rules)
   - [6. API Route Definitions](#6-api-route-definitions)
   - [7. State Management](#7-state-management)
   - [8. Styling](#8-styling)
@@ -18,7 +20,7 @@
 
 ## 1. Introduction
 
-This style guide outlines the conventions for creating and maintaining a CAJS (Component Architecture JavaScript) configuration for component-based applications, with added support for Markdown content. It aims to provide a consistent, readable, and maintainable structure for application configurations.
+This style guide outlines the conventions for creating and maintaining a CAJS (Component Architecture JavaScript) configuration for component-based applications. It provides a consistent, readable, and maintainable structure for application configurations.
 
 ## 2. Project Structure
 
@@ -29,11 +31,14 @@ const appConfig = {
   meta: {},           // Project-wide configurations
   pages: {},          // Page/route definitions
   components: {},     // Component definitions
-  api: {},            // API route definitions
-  state: {},          // Global state management
-  styles: {},         // Custom styling configurations
-  i18n: {},           // Internationalization settings
-  markdown: {}        // Markdown content
+  api: {},           // API route definitions
+  state: {},         // Global state management
+  styles: {},        // Custom styling configurations (optional)
+  i18n: {},          // Internationalization settings (optional)
+  markdown: {},      // Markdown content
+  primaryColor: "",   // Primary theme color
+  secondaryColor: "", // Secondary theme color
+  fontFamily: ""     // Primary font family
 };
 ```
 
@@ -46,25 +51,31 @@ meta: {
   title: "App Title",
   description: "App Description",
   favicon: "/favicon.ico",
-  dependencies: { /* key-value pairs */ },
-  shadcnComponents: ['Component1', 'Component2']
+  format: "cajs-1",  // Specifies CAJS format version
+  shadcnComponents: "Button Card Alert Dialog Toast" // Space-separated string
 }
 ```
+
+The `format` value of `cajs-1` indicates this configuration:
+- Uses the CAJS v1 specification
+- Includes support for shadcn components
+- Includes support for Markdown content
+- Follows all conventions defined in this guide
 
 ## 4. Page Definitions
 
-Define pages as an object with route paths as keys. For regular pages, use arrays as values. For Markdown pages, use objects:
+Define pages as an object with route paths as keys:
 
 ```javascript
 pages: {
+  // Regular pages: [ComponentName, PageTitle, PageDescription]
   "/": ["HomePage", "Home", "Welcome to our app"],
-  "/about": ["AboutPage", "About Us", "Learn more about our company"],
+  "/about": ["AboutPage", "About Us", "Learn more"],
+
+  // Markdown pages: { type: "markdown", content: "markdownKey" }
   "/terms": { type: "markdown", content: "terms-and-conditions" }
 }
 ```
-
-- Regular pages: [ComponentName, PageTitle, PageDescription]
-- Markdown pages: { type: "markdown", content: "markdownKey" }
 
 ## 5. Component Definitions
 
@@ -82,8 +93,45 @@ components: {
 }
 ```
 
-- Use array notation for element structure: [tag+classes, children/props]
-- For dynamic content, use placeholders: '{propName}'
+### 5.1 Using Pre-built Components
+
+To incorporate pre-built components (such as those from ShadCN), use the component name directly in the element array:
+
+```javascript
+components: {
+  LoginForm: {
+    props: ['onSubmit'],
+    element: ['div.login-form', [
+      ['Card', [
+        ['CardHeader', [
+          ['CardTitle', 'Login']
+        ]],
+        ['CardContent', [
+          ['Input', { type: 'email', placeholder: 'Email' }],
+          ['Input', { type: 'password', placeholder: 'Password' }],
+          ['Button', { variant: 'primary' }, 'Sign In']
+        ]]
+      ]]
+    ]]
+  }
+}
+```
+
+Important notes:
+- Pre-built components must be listed in `meta.shadcnComponents`
+- Use PascalCase when referencing pre-built components
+- Props for pre-built components are passed as the second element in the array
+- Nested content for pre-built components goes in the third element of the array
+
+### 5.2 Component Composition Rules
+
+1. Native HTML elements are specified in lowercase (e.g., 'div', 'span')
+2. Pre-built components are specified in PascalCase (e.g., 'Card', 'Button')
+3. Custom components can be referenced using their exact name as defined in the components object
+4. The element array structure is always: `[name, ?props, ?children]`
+   - `name`: String (required) - The element or component name
+   - `props`: Object (optional) - Properties to pass to the element
+   - `children`: Array or String (optional) - Nested content
 
 ## 6. API Route Definitions
 
@@ -113,13 +161,23 @@ state: {
 
 ## 8. Styling
 
-Define styles under the `styles` key:
+Styling can be defined in two ways:
 
+1. Using top-level shortcuts (preferred for basic theming):
+```javascript
+{
+  primaryColor: "#0070f3",
+  secondaryColor: "#7928ca",
+  fontFamily: "Inter"
+}
+```
+
+2. Using the detailed `styles` object (optional):
 ```javascript
 styles: {
   utility: {
     extend: {
-      colors: { primary: "#FF69B4" }
+      colors: { custom: "#123456" }
     }
   },
   custom: {
@@ -130,7 +188,7 @@ styles: {
 
 ## 9. Internationalization
 
-Define i18n settings and translations:
+The `i18n` object is optional and should only be included for multilingual applications:
 
 ```javascript
 i18n: {
@@ -155,29 +213,20 @@ markdown: {
 # Terms and Conditions
 
 1. **Acceptance of Terms**
-   By accessing this website, you agree to be bound by these terms and conditions.
-
-2. **Use License**
-   Permission is \`granted\` to temporarily download one copy of the materials...
-
-   (Rest of the Markdown content)
+   By accessing this website...
   `,
   "privacy-policy": `
 # Privacy Policy
 
-## 1. Information We Collect
-
-We collect information you provide directly to us, such as...
-
-(Rest of the Markdown content)
+## Information We Collect...
   `
 }
 ```
 
 ## 11. Naming Conventions
 
-- Use camelCase for object keys and variable names
 - Use PascalCase for component names
+- Use camelCase for object keys and variable names
 - Use kebab-case for CSS classes, file names, and Markdown content keys
 - Use UPPERCASE for constant values
 
@@ -185,13 +234,13 @@ We collect information you provide directly to us, such as...
 
 1. Keep the configuration object flat where possible
 2. Use meaningful, descriptive key names
-3. Use comments to explain complex structures or provide context
+3. Use comments to explain complex structures
 4. Group related configurations together
 5. Avoid deep nesting; aim for a maximum depth of 3-4 levels
-6. Use array notation for ordered elements (like in component definitions)
-7. Keep the configuration DRY (Don't Repeat Yourself) by using variables or functions for repeated values
-8. Validate the configuration object structure in your application to catch errors early
-9. For Markdown content, consider using separate files for very large content and importing them into the configuration
-10. Use Markdown for content-heavy pages or sections where rich formatting is beneficial
-11. When using shadcn components, list them in the meta section for easy reference
-12. For complex components, consider breaking them down into smaller, reusable parts
+6. Use array notation for ordered elements
+7. Keep the configuration DRY (Don't Repeat Yourself)
+8. Validate the configuration object structure
+9. Consider separate files for large Markdown content
+10. Use Markdown for content-heavy pages
+11. List all shadcn components in meta section
+12. Break down complex components into smaller parts

@@ -1,4 +1,4 @@
-export default appConfig ={
+export default {
   meta: {
     title: "Paws & Nibbles Pet Food Store",
     description: "Premium pet food and supplies for your furry friends",

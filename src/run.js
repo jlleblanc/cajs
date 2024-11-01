@@ -1,7 +1,6 @@
-import parsed from './parse.js';
+import appConfig from '../examples/pet-food-cajs.js';
+import { parseCAJS } from './parse.js';
 import repl from 'repl';
 
-console.log(parsed);
-
 const replServer = repl.start();
-replServer.context.parsed = parsed;
+replServer.context.parsed = parseCAJS(appConfig);

@@ -1,9 +1,6 @@
 // Import necessary libraries
 import React from 'react';
 
-// Load the app configuration
-import appConfig from '../examples/pet-food-cajs.js';
-
 // Utility function to parse the tag string
 function parseTag(tagString) {
   const parts = tagString.split('.');
@@ -13,13 +10,19 @@ function parseTag(tagString) {
 }
 
 // Utility function to render element definitions
-function renderElement(elementDef, props = {}) {
+function renderElement(elementDef, props = {}, config) {
   if (typeof elementDef === 'string') {
     return resolveDynamicString(elementDef, props);
   }
 
   if (Array.isArray(elementDef)) {
     let [name, elementProps = {}, children = null] = elementDef;
+
+    // Handle page components
+    if (config.pages && config.pages[name]) {
+      const page = parsePages(config.pages, config)[name];
+      return renderElement(page.element, props, config);
+    }
 
     // Adjust arguments if elementProps is actually children
     if (Array.isArray(elementProps) || typeof elementProps === 'string') {
@@ -46,7 +49,7 @@ function renderElement(elementDef, props = {}) {
       childrenElements = children.map((child, index) => (
         React.isValidElement(child)
           ? React.cloneElement(child, { key: index })
-          : renderElement(child, props)
+          : renderElement(child, props, config)
       ));
     } else if (typeof children === 'string') {
       childrenElements = resolveDynamicString(children, props);
@@ -56,6 +59,70 @@ function renderElement(elementDef, props = {}) {
   }
 
   return null;
+}
+
+// Modify parsePages to accept config parameter
+function parsePages(pagesDef, config) {
+  const pages = {};
+
+  // Return empty object if no pages defined
+  if (!pagesDef) {
+    return pages;
+  }
+
+  // Validate pagesDef is an object
+  if (typeof pagesDef !== 'object' || Array.isArray(pagesDef)) {
+    throw new Error('Pages definition must be an object');
+  }
+
+  try {
+    for (const [route, definition] of Object.entries(pagesDef)) {
+      if (!definition) {
+        console.warn(`Skipping invalid page definition for route: ${route}`);
+        continue;
+      }
+
+      if (typeof definition === 'object' && definition.type === 'markdown') {
+        // Handle markdown pages
+        if (!definition.content || !config.markdown?.[definition.content]) {
+          console.warn(`Missing markdown content for route: ${route}`);
+          continue;
+        }
+
+        pages[route] = {
+          type: 'markdown',
+          content: definition.content,
+          element: ['div.markdown-content', {
+            dangerouslySetInnerHTML: {
+              __html: config.markdown[definition.content]
+            }
+          }]
+        };
+      } else if (Array.isArray(definition)) {
+        // Handle regular pages
+        const [componentName, title, description] = definition;
+        if (!componentName) {
+          console.warn(`Missing component name for route: ${route}`);
+          continue;
+        }
+
+        pages[route] = {
+          type: 'component',
+          component: componentName,
+          title: title || '',
+          description: description || '',
+          element: [componentName]
+        };
+      } else {
+        console.warn(`Invalid page definition format for route: ${route}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing pages:', error);
+    return {};
+  }
+
+  return pages;
 }
 
 // Function to get the component by name
@@ -96,32 +163,54 @@ function resolveDynamicString(template, contextProps) {
   });
 }
 
-// Generated components will be stored here
 const components = {};
 
-// Build components from the configuration
-for (const componentName in appConfig.components) {
-  const componentDef = appConfig.components[componentName];
-  const { props: componentProps = [], element } = componentDef;
+function createComponents(config) {
+  if (!config || !config.components) {
+    return components;
+  }
 
-  const Component = (props) => {
-    // Merge component props into context props for dynamic expression resolution
-    const contextProps = { ...props };
+  for (const componentName in config.components) {
+    const componentDef = config.components[componentName];
+    const { props: componentProps = [], element } = componentDef;
 
-    // Include default props as null if not provided
-    componentProps.forEach((propName) => {
-      if (!(propName in contextProps)) {
-        contextProps[propName] = null;
-      }
-    });
+    const Component = (props) => {
+      // Merge component props into context props for dynamic expression resolution
+      const contextProps = { ...props };
 
-    return renderElement(element, contextProps);
-  };
+      // Include default props as null if not provided
+      componentProps.forEach((propName) => {
+        if (!(propName in contextProps)) {
+          contextProps[propName] = null;
+        }
+      });
 
-  Component.displayName = componentName;
+      return renderElement(element, contextProps, config);
+    };
 
-  components[componentName] = Component;
+    Component.displayName = componentName;
+    components[componentName] = Component;
+  }
+
+  return components;
 }
 
-// Export components
-export default components;
+// Update parseCAJS to use createComponents
+function parseCAJS(config) {
+  const components = createComponents(config);
+  const pages = config.pages ? parsePages(config.pages, config) : {};
+
+  return {
+    meta: config.meta || {},
+    components,
+    pages,
+  };
+}
+
+export {
+  parseTag,
+  renderElement,
+  parsePages,
+  parseCAJS,
+  createComponents
+};

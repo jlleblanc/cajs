@@ -15,8 +15,7 @@
   },
   "dependencies": {
     "cajs": "workspace:*",
-    "react": "^18.3.1",
-    "next": "^13.0.0"
+    "react": "^19.0.0-rc-02c0e824-20241028"
   },
   "devDependencies": {
     "esbuild": "^0.20.0"

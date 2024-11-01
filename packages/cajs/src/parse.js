@@ -10,55 +10,39 @@ function parseTag(tagString) {
 }
 
 // Utility function to render element definitions
-function renderElement(elementDef, props = {}, config) {
-  if (typeof elementDef === 'string') {
-    return resolveDynamicString(elementDef, props);
+function renderElement(element, contextProps, config) {
+  // If element is already a valid React element, return it directly
+  if (React.isValidElement(element)) {
+    return element;
   }
 
-  if (Array.isArray(elementDef)) {
-    let [name, elementProps = {}, children = null] = elementDef;
-
-    // Handle page components
-    if (config.pages && config.pages[name]) {
-      const page = parsePages(config.pages, config)[name];
-      return renderElement(page.element, props, config);
-    }
-
-    // Adjust arguments if elementProps is actually children
-    if (Array.isArray(elementProps) || typeof elementProps === 'string') {
-      children = elementProps;
-      elementProps = {};
-    }
-
-    const { tagName, className } = parseTag(name);
-
-    // Merge className from tag parsing and elementProps
-    if (className) {
-      elementProps.className = [elementProps.className, className].filter(Boolean).join(' ');
-    }
-
-    // Resolve dynamic expressions in props
-    elementProps = resolveDynamicProps(elementProps, props);
-
-    // Get the component to render
-    const Component = getComponentByName(tagName);
-
-    // Render children recursively
-    let childrenElements = null;
-    if (Array.isArray(children)) {
-      childrenElements = children.map((child, index) => (
-        React.isValidElement(child)
-          ? React.cloneElement(child, { key: index })
-          : renderElement(child, props, config)
-      ));
-    } else if (typeof children === 'string') {
-      childrenElements = resolveDynamicString(children, props);
-    }
-
-    return React.createElement(Component, elementProps, childrenElements);
+  // If element is an array, map over and render each child
+  if (Array.isArray(element)) {
+    return element.map((child, index) =>
+      renderElement(child, contextProps, config)
+    );
   }
 
-  return null;
+  // Handle object case
+  if (typeof element === 'object' && element !== null) {
+    const { type, props = {}, children } = element;
+
+    // Render children if present
+    const renderedChildren = children
+      ? (Array.isArray(children)
+          ? children.map((child, index) => renderElement(child, contextProps, config))
+          : renderElement(children, contextProps, config))
+      : null;
+
+    return React.createElement(
+      type,
+      { ...contextProps, ...props, key: props.key || undefined },
+      renderedChildren
+    );
+  }
+
+  // Return primitive values as-is
+  return element;
 }
 
 // Modify parsePages to accept config parameter

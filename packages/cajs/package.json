@@ -7,7 +7,7 @@
     "build": "esbuild src/index.js --bundle --platform=node --format=esm --outdir=dist"
   },
   "dependencies": {
-    "react": "^18.3.1"
+    "react": "^19.0.0-rc-02c0e824-20241028"
   },
   "devDependencies": {
     "esbuild": "^0.20.0"

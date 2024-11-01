@@ -9,40 +9,67 @@ function parseTag(tagString) {
   return { tagName, className };
 }
 
+function isProps(obj) {
+  return obj && typeof obj === 'object' && !Array.isArray(obj);
+}
+
 // Utility function to render element definitions
-function renderElement(element, contextProps, config) {
-  // If element is already a valid React element, return it directly
-  if (React.isValidElement(element)) {
-    return element;
-  }
-
-  // If element is an array, map over and render each child
+function renderElement(element, contextProps, config, components) {
   if (Array.isArray(element)) {
-    return element.map((child, index) =>
-      renderElement(child, contextProps, config)
-    );
-  }
+    const [tagString, maybeProps, maybeChildren] = element;
 
-  // Handle object case
-  if (typeof element === 'object' && element !== null) {
-    const { type, props = {}, children } = element;
+    // Parse the tag string
+    const { tagName, className } = parseTag(tagString);
 
-    // Render children if present
-    const renderedChildren = children
-      ? (Array.isArray(children)
-          ? children.map((child, index) => renderElement(child, contextProps, config))
-          : renderElement(children, contextProps, config))
+    let props = {};
+    let children = null;
+
+    if (isProps(maybeProps)) {
+      props = maybeProps;
+      children = maybeChildren;
+    } else {
+      children = maybeProps;
+    }
+
+    // Add className to props
+    if (className) {
+      props = { ...props, className: [props.className, className].filter(Boolean).join(' ') };
+    }
+
+    // Resolve dynamic props
+    const resolvedProps = resolveDynamicProps(props, contextProps);
+
+    // Resolve children
+    const renderedChildren = Array.isArray(children)
+      ? children.map((child) => renderElement(child, contextProps, config, components)) // Pass components here
+      : typeof children === 'string'
+      ? resolveDynamicString(children, contextProps)
+      : children
+      ? renderElement(children, contextProps, config, components) // Pass components here
       : null;
 
+    // Handle custom components
+    let Component;
+    if (/^[A-Z]/.test(tagName)) {
+      // Custom component
+      Component = components[tagName];
+      if (!Component) {
+        throw new Error(`Component ${tagName} not found`);
+      }
+    } else {
+      // HTML tag
+      Component = tagName;
+    }
+
     return React.createElement(
-      type,
-      { ...contextProps, ...props, key: props.key || undefined },
+      Component,
+      resolvedProps,
       renderedChildren
     );
+  } else if (typeof element === 'string') {
+    return resolveDynamicString(element, contextProps);
   }
-
-  // Return primitive values as-is
-  return element;
+  return null;
 }
 
 // Modify parsePages to accept config parameter
@@ -109,21 +136,11 @@ function parsePages(pagesDef, config) {
   return pages;
 }
 
-// Function to get the component by name
-function getComponentByName(name) {
-  // Check if it's a custom component
-  if (components[name]) {
-    return components[name];
-  }
-
-  return name;
-}
-
 // Function to resolve dynamic expressions in props
-function resolveDynamicProps(elementProps, contextProps) {
+function resolveDynamicProps(props, contextProps) {
   const resolvedProps = {};
-  for (const key in elementProps) {
-    let value = elementProps[key];
+  for (const key in props) {
+    let value = props[key];
     if (typeof value === 'string') {
       value = resolveDynamicString(value, contextProps);
     } else if (typeof value === 'object' && value !== null) {
@@ -136,20 +153,21 @@ function resolveDynamicProps(elementProps, contextProps) {
 
 // Function to resolve dynamic expressions in strings
 function resolveDynamicString(template, contextProps) {
-  return template.replace(/\{(.*?)\}/g, (_, expr) => {
+  return template.replace(/\{([^}]+)\}/g, (match, expr) => {
     try {
-      const func = new Function(...Object.keys(contextProps), `return ${expr}`);
+      // Use a safe evaluation mechanism
+      const func = new Function(...Object.keys(contextProps), `return ${expr};`);
       return func(...Object.values(contextProps));
     } catch (e) {
-      console.error('Error resolving dynamic string:', e);
+      console.error('Error evaluating expression:', expr, e);
       return '';
     }
   });
 }
 
-const components = {};
-
 function createComponents(config) {
+  const components = {};
+
   if (!config || !config.components) {
     return components;
   }
@@ -159,7 +177,6 @@ function createComponents(config) {
     const { props: componentProps = [], element } = componentDef;
 
     const Component = (props) => {
-      // Merge component props into context props for dynamic expression resolution
       const contextProps = { ...props };
 
       // Include default props as null if not provided
@@ -169,7 +186,8 @@ function createComponents(config) {
         }
       });
 
-      return renderElement(element, contextProps, config);
+      // Pass `components` to `renderElement`
+      return renderElement(element, contextProps, config, components);
     };
 
     Component.displayName = componentName;

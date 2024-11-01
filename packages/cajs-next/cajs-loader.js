@@ -1,14 +1,18 @@
-import { parseCAJS } from './transform';
+import { transformCAJSToNext } from './transform';
 
-export default function loader(source) {
+export default async function loader() {
   const callback = this.async();
+
   try {
-    const parsedConfig = parseCAJS(source);
-    const result = `
-      import { createComponents } from 'cajs-next/runtime';
-      export default createComponents(${JSON.stringify(parsedConfig)});
-    `;
-    callback(null, result);
+    const configPath = this.resourcePath;
+
+    // Dynamically import the CAJS config module as ES module
+    const cajsConfigModule = await import(configPath);
+    const cajsConfig = cajsConfigModule.default || cajsConfigModule;
+
+    const transformedCode = transformCAJSToNext(cajsConfig);
+
+    callback(null, transformedCode);
   } catch (err) {
     callback(err);
   }

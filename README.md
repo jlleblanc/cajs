@@ -4,9 +4,9 @@ A compact JavaScript format for describing web applications built in frameworks 
 
 ## Usage
 
-In a codebase: Add STYLEGUIDE.md to your code base, then use your IDE’s AI chat function to reference the file.
+In a codebase: Add [STYLEGUIDE.md](STYLEGUIDE.md) to your code base, then use your IDE’s AI chat function to reference the file.
 
-In an application such as claude.ai or ChatGPT: add STYLEGUIDE.md to your project.
+In an application such as claude.ai or ChatGPT: add [STYLEGUIDE.md](STYLEGUIDE.md) to your project.
 
 ## Roadmap
 

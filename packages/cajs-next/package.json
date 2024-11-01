@@ -1,0 +1,17 @@
+{
+  "name": "cajs-next",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.js --bundle --platform=node --format=esm --outdir=dist"
+  },
+  "dependencies": {
+    "cajs": "workspace:*",
+    "react": "^18.3.1",
+    "next": "^13.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0"
+  }
+}

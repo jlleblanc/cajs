@@ -1,0 +1,3 @@
+packages:
+  - 'packages/cajs'
+  - 'packages/cajs-next'

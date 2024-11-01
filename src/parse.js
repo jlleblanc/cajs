@@ -1,21 +1,6 @@
 // Import necessary libraries
 import React from 'react';
 
-// Import pre-built components (e.g., from ShadCN UI)
-// import {
-//   Card,
-//   CardHeader,
-//   CardTitle,
-//   CardContent,
-//   Button,
-//   Input,
-//   Dialog,
-//   DialogTrigger,
-//   DialogContent,
-//   AlertDialog,
-//   Toast,
-// } from 'shadcn';
-
 // Load the app configuration
 import appConfig from '../examples/pet-food-cajs.js';
 
@@ -79,25 +64,7 @@ function getComponentByName(name) {
   if (components[name]) {
     return components[name];
   }
-  // Check if it's a pre-built component
-  // const prebuiltComponents = {
-  //   Card,
-  //   CardHeader,
-  //   CardTitle,
-  //   CardContent,
-  //   Button,
-  //   Input,
-  //   Dialog,
-  //   DialogTrigger,
-  //   DialogContent,
-  //   AlertDialog,
-  //   Toast,
-  //   // Add other pre-built components here
-  // };
-  // if (prebuiltComponents[name]) {
-  //   return prebuiltComponents[name];
-  // }
-  // Fallback to native HTML elements
+
   return name;
 }
 
